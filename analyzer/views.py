@@ -12,8 +12,7 @@ from .skill_data import (
 
 
 def home(request):
-    if request.user.is_authenticated:
-        return redirect('dashboard')
+        
     return render(request, 'analyzer/home.html')
 
 
