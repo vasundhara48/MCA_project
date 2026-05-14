@@ -1,0 +1,206 @@
+{% extends 'analyzer/base.html' %}
+
+{% block content %}
+<section class="dashboard-section">
+    <div class="container">
+        <div class="dash-header">
+            <div>
+                <h1 class="dash-title">Welcome, {{ request.user.first_name|default:request.user.email }}</h1>
+                <p class="dash-subtitle">Manage your skills and analyze your career readiness</p>
+            </div>
+        </div>
+
+        <div class="dash-grid">
+            <!-- Left Column: Skills -->
+            <div class="dash-col dash-col-skills">
+                <!-- Current Skills Card -->
+                <div class="dash-card">
+                    <div class="dash-card-header">
+                        <h3><i class="fas fa-tags"></i> Your Skills</h3>
+                        <span class="badge">{{ user_skills|length }} skills</span>
+                    </div>
+                    <div class="dash-card-body">
+                        {% if user_skills %}
+                        <div class="skill-tags">
+                            {% for skill in user_skills %}
+                            <div class="skill-tag skill-tag-{{ skill.proficiency }}">
+                                <span>{{ skill.skill_name }}</span>
+                                <a href="{% url 'remove_skill' skill.id %}" class="tag-remove" title="Remove">&times;</a>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        {% else %}
+                        <div class="empty-state">
+                            <i class="fas fa-plus-circle"></i>
+                            <p>No skills added yet. Start adding skills below!</p>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Add Skill Card -->
+                <div class="dash-card">
+                    <div class="dash-card-header">
+                        <h3><i class="fas fa-plus"></i> Add Skill</h3>
+                    </div>
+                    <div class="dash-card-body">
+                        <form method="post" action="{% url 'add_skill' %}" class="add-skill-form">
+                            {% csrf_token %}
+                            <div class="add-skill-row">
+                                <div class="add-skill-input-wrap">
+                                    <input type="text" name="skill_name" id="skill-input"
+                                        placeholder="Search or type a skill..." autocomplete="off"
+                                        class="form-input">
+                                    <div class="skill-suggestions" id="skill-suggestions"></div>
+                                </div>
+                                <select name="proficiency" class="form-input proficiency-select">
+                                    <option value="beginner">Beginner</option>
+                                    <option value="intermediate" selected>Intermediate</option>
+                                    <option value="advanced">Advanced</option>
+                                    <option value="expert">Expert</option>
+                                </select>
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-plus"></i> Add
+                                </button>
+                            </div>
+                        </form>
+
+                        <!-- Skill Categories Browser -->
+                        <div class="skill-browser">
+                            <div class="browser-toggle" id="browser-toggle">
+                                <i class="fas fa-th"></i>
+                                <span>Browse Skills by Category</span>
+                                <i class="fas fa-chevron-down"></i>
+                            </div>
+                            <div class="browser-panel" id="browser-panel">
+                                {% for cat, skills in SKILL_CATEGORIES.items %}
+                                <div class="browser-category">
+                                    <h4 class="browser-cat-title">{{ cat }}</h4>
+                                    <div class="browser-cat-skills">
+                                        {% for skill in skills %}
+                                        <form method="post" action="{% url 'add_skill' %}" class="inline-form">
+                                            {% csrf_token %}
+                                            <input type="hidden" name="skill_name" value="{{ skill }}">
+                                            <input type="hidden" name="proficiency" value="intermediate">
+                                            <button type="submit"
+                                                class="browser-skill-chip {% if skill in user_skill_names %}added{% endif %}">
+                                                {{ skill }}
+                                                {% if skill not in user_skill_names %}
+                                                <i class="fas fa-plus"></i>
+                                                {% else %}
+                                                <i class="fas fa-check"></i>
+                                                {% endif %}
+                                            </button>
+                                        </form>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Column: Role & Analyze -->
+            <div class="dash-col dash-col-role">
+                <!-- Target Role Card -->
+                <div class="dash-card">
+                    <div class="dash-card-header">
+                        <h3><i class="fas fa-bullseye"></i> Target Role</h3>
+                    </div>
+                    <div class="dash-card-body">
+                        <form method="post" action="{% url 'set_target_role' %}" class="role-form">
+                            {% csrf_token %}
+                            <select name="target_role" class="form-input role-select" id="role-select">
+                                <option value="">-- Select a role --</option>
+                                {% for role_name in roles %}
+                                <option value="{{ role_name }}" {% if profile.target_role == role_name %}selected{% endif %}>
+                                    {{ role_name }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                            <p class="role-description" id="role-description">
+                                {% if profile.target_role and roles %}
+                                    {{ roles|dictsort:"0"|first }}
+                                {% endif %}
+                            </p>
+                            <button type="submit" class="btn btn-primary btn-full">
+                                <i class="fas fa-save"></i> Save Target Role
+                            </button>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Analyze Card -->
+                <div class="dash-card dash-card-analyze">
+                    <div class="dash-card-body">
+                        <div class="analyze-visual">
+                            <div class="analyze-icon-wrap">
+                                <i class="fas fa-magnifying-glass-chart"></i>
+                            </div>
+                        </div>
+                        <h3>Ready to Analyze?</h3>
+                        <p>Add your skills and select a target role, then run a full skill gap analysis.</p>
+                        <form method="post" action="{% url 'analyze' %}">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-primary btn-lg btn-full"
+                                {% if not user_skills or not profile.target_role %}disabled{% endif %}>
+                                <i class="fas fa-bolt"></i> Run Analysis
+                            </button>
+                        </form>
+                        {% if not user_skills %}
+                        <p class="analyze-hint"><i class="fas fa-info-circle"></i> Add at least one skill first</p>
+                        {% elif not profile.target_role %}
+                        <p class="analyze-hint"><i class="fas fa-info-circle"></i> Select a target role first</p>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Latest Analysis Card -->
+                {% if latest_analysis %}
+                <div class="dash-card">
+                    <div class="dash-card-header">
+                        <h3><i class="fas fa-history"></i> Latest Analysis</h3>
+                    </div>
+                    <div class="dash-card-body">
+                        <div class="latest-analysis-row">
+                            <div>
+                                <strong>{{ latest_analysis.target_role }}</strong>
+                                <span class="analysis-date">{{ latest_analysis.created_at|date:"M d, Y" }}</span>
+                            </div>
+                            <div class="match-badge match-{{ latest_analysis.match_percentage|floatformat:0 }}">
+                                {{ latest_analysis.match_percentage }}%
+                            </div>
+                        </div>
+                        <div class="latest-analysis-actions">
+                            <a href="{% url 'results' latest_analysis.id %}" class="btn btn-ghost btn-sm">
+                                <i class="fas fa-eye"></i> View Results
+                            </a>
+                            <a href="{% url 'roadmap' latest_analysis.id %}" class="btn btn-ghost btn-sm">
+                                <i class="fas fa-route"></i> View Roadmap
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Pass skills data and user skills to JS
+const allSkills = {{ ALL_SKILLS|safe }};
+const userSkillNames = [{% for s in user_skills %}"{{ s.skill_name }}"{% if not forloop.last %},{% endif %}{% endfor %}];
+
+const rolesData = {};
+{% for name, data in roles.items %}
+rolesData["{{ name }}"] = {
+    description: "{{ data.description|escapejs }}"
+};
+{% endfor %}
+</script>
+{% endblock %}

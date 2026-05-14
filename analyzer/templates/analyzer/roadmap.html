@@ -1,0 +1,74 @@
+{% extends 'analyzer/base.html' %}
+
+{% block content %}
+<section class="roadmap-section">
+    <div class="container">
+        <div class="roadmap-header">
+            <a href="{% url 'results' analysis.id %}" class="back-link">
+                <i class="fas fa-arrow-left"></i> Back to Results
+            </a>
+            <h1>Your Learning Roadmap</h1>
+            <p class="roadmap-role">For {{ analysis.target_role }}</p>
+        </div>
+
+        {% if phases %}
+        <div class="roadmap-timeline">
+            {% for phase in phases %}
+            <div class="timeline-phase reveal" data-delay="{{ forloop.counter0 }}00">
+                <div class="phase-marker" style="--phase-color: {{ phase.color }}">
+                    <div class="phase-number">{{ phase.icon }}</div>
+                    <div class="phase-line"></div>
+                </div>
+                <div class="phase-card" style="--phase-color: {{ phase.color }}">
+                    <div class="phase-card-header">
+                        <div>
+                            <h3>{{ phase.name }}</h3>
+                            <p class="phase-desc">{{ phase.description }}</p>
+                        </div>
+                        <span class="phase-duration">
+                            <i class="fas fa-clock"></i> {{ phase.duration }}
+                        </span>
+                    </div>
+                    <div class="phase-skills">
+                        {% for skill in phase.skills %}
+                        <div class="phase-skill-item">
+                            <i class="fas fa-circle" style="color: {{ phase.color }}"></i>
+                            <span>{{ skill }}</span>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    <div class="phase-tip">
+                        <i class="fas fa-lightbulb"></i>
+                        {% if forloop.counter == 1 %}
+                        Focus on building a strong foundation. These are the building blocks for everything else.
+                        {% elif forloop.counter == 2 %}
+                        These are the essential skills employers look for. Prioritize hands-on practice.
+                        {% elif forloop.counter == 3 %}
+                        Advanced skills set you apart. Build projects that demonstrate these abilities.
+                        {% else %}
+                        Apply all your knowledge in real-world projects. This is where theory meets practice.
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <div class="roadmap-footer-cta">
+            <a href="{% url 'dashboard' %}" class="btn btn-primary btn-lg">
+                <i class="fas fa-redo"></i> Re-analyze After Learning
+            </a>
+        </div>
+        {% else %}
+        <div class="empty-state-roadmap">
+            <i class="fas fa-trophy"></i>
+            <h3>No Missing Skills!</h3>
+            <p>You already have all the skills required for {{ analysis.target_role }}. Congratulations!</p>
+            <a href="{% url 'dashboard' %}" class="btn btn-primary">
+                <i class="fas fa-arrow-left"></i> Back to Dashboard
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</section>
+{% endblock %}

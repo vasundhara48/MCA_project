@@ -1,0 +1,16 @@
+{% extends 'base.html' %}
+{% block content %}
+<section class="analyze-section"><div class="container">
+    <div class="section-header"><h1 class="section-title">Analyze Your <span class="gradient-text">Skill Gap</span></h1></div>
+    <div class="analyze-grid">
+        <div class="analyze-form-card">
+            <form method="post">{% csrf_token %}
+                <div class="form-group"><label>Target Job Role</label>{{ form.target_role }}</div>
+                <div class="form-group"><label>Your Current Skills</label>{{ form.current_skills }}</div>
+                <button type="submit" class="btn btn-primary btn-block btn-lg">Analyze Skill Gap</button>
+            </form>
+        </div>
+        <div class="analyze-preview"><div class="preview-card"><h3>Select a role to see requirements</h3></div></div>
+    </div>
+</div></section>
+{% endblock %}

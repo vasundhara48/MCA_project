@@ -1,0 +1,163 @@
+{% extends 'analyzer/base.html' %}
+
+{% block content %}
+<section class="results-section">
+    <div class="container">
+        <div class="results-header">
+            <a href="{% url 'dashboard' %}" class="back-link">
+                <i class="fas fa-arrow-left"></i> Back to Dashboard
+            </a>
+            <h1>Skill Gap Analysis</h1>
+            <p class="results-role">{{ analysis.target_role }}</p>
+        </div>
+
+        <!-- Match Score -->
+        <div class="score-card">
+            <div class="score-ring-container">
+                <svg class="score-ring" viewBox="0 0 200 200">
+                    <circle cx="100" cy="100" r="85" fill="none" stroke="#E2E8F0" stroke-width="12"/>
+                    <circle cx="100" cy="100" r="85" fill="none"
+                        stroke="url(#scoreGrad)" stroke-width="12"
+                        stroke-linecap="round"
+                        stroke-dasharray="534"
+                        stroke-dashoffset="534"
+                        transform="rotate(-90 100 100)"
+                        class="score-ring-fill"/>
+                    <defs>
+                        <linearGradient id="scoreGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" style="stop-color:#4F46E5"/>
+                            <stop offset="100%" style="stop-color:#06B6D4"/>
+                        </linearGradient>
+                    </defs>
+                </svg>
+                <div class="score-value">
+                    <span class="score-number" data-target="{{ analysis.match_percentage }}">0</span>
+                    <span class="score-percent">%</span>
+                    <span class="score-label">Match</span>
+                </div>
+            </div>
+            <div class="score-summary">
+                <h2>{{ analysis.match_percentage }}% Match for {{ analysis.target_role }}</h2>
+                <p>You have {{ analysis.matched_core|length }} of {{ analysis.matched_core|length|add:analysis.missing_core|length }} core skills. Keep learning to close the gap!</p>
+                {% if analysis.missing_core or analysis.missing_nice %}
+                <a href="{% url 'roadmap' analysis.id %}" class="btn btn-primary btn-lg">
+                    <i class="fas fa-route"></i> View Your Roadmap
+                </a>
+                {% else %}
+                <div class="complete-badge">
+                    <i class="fas fa-trophy"></i> You have all the required skills!
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Skills Breakdown -->
+        <div class="breakdown-grid">
+            <!-- Matched Core -->
+            <div class="breakdown-card breakdown-matched">
+                <div class="breakdown-header">
+                    <h3><i class="fas fa-check-circle"></i> Matched Core Skills</h3>
+                    <span class="badge badge-green">{{ analysis.matched_core|length }}</span>
+                </div>
+                <div class="breakdown-body">
+                    {% if analysis.matched_core %}
+                    <div class="skill-tags">
+                        {% for skill in analysis.matched_core %}
+                        <span class="skill-tag skill-tag-matched">{{ skill }}</span>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <p class="empty-text">No core skills matched yet.</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Missing Core -->
+            <div class="breakdown-card breakdown-missing">
+                <div class="breakdown-header">
+                    <h3><i class="fas fa-exclamation-triangle"></i> Missing Core Skills</h3>
+                    <span class="badge badge-red">{{ analysis.missing_core|length }}</span>
+                </div>
+                <div class="breakdown-body">
+                    {% if analysis.missing_core %}
+                    <div class="skill-tags">
+                        {% for skill in analysis.missing_core %}
+                        <span class="skill-tag skill-tag-missing">{{ skill }}</span>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <p class="empty-text">You have all core skills! Amazing.</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Matched Nice-to-have -->
+            <div class="breakdown-card breakdown-nice-matched">
+                <div class="breakdown-header">
+                    <h3><i class="fas fa-star"></i> Matched Bonus Skills</h3>
+                    <span class="badge badge-blue">{{ analysis.matched_nice|length }}</span>
+                </div>
+                <div class="breakdown-body">
+                    {% if analysis.matched_nice %}
+                    <div class="skill-tags">
+                        {% for skill in analysis.matched_nice %}
+                        <span class="skill-tag skill-tag-bonus-matched">{{ skill }}</span>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <p class="empty-text">No bonus skills matched.</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Missing Nice-to-have -->
+            <div class="breakdown-card breakdown-nice-missing">
+                <div class="breakdown-header">
+                    <h3><i class="fas fa-lightbulb"></i> Bonus Skills to Consider</h3>
+                    <span class="badge badge-yellow">{{ analysis.missing_nice|length }}</span>
+                </div>
+                <div class="breakdown-body">
+                    {% if analysis.missing_nice %}
+                    <div class="skill-tags">
+                        {% for skill in analysis.missing_nice %}
+                        <span class="skill-tag skill-tag-bonus-missing">{{ skill }}</span>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <p class="empty-text">You already have all the bonus skills!</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Animate score ring
+document.addEventListener('DOMContentLoaded', function() {
+    const target = parseFloat(document.querySelector('.score-number').dataset.target);
+    const circumference = 2 * Math.PI * 85; // ~534
+    const offset = circumference - (target / 100) * circumference;
+
+    setTimeout(() => {
+        const ring = document.querySelector('.score-ring-fill');
+        if (ring) ring.style.strokeDashoffset = offset;
+
+        // Animate number
+        const numEl = document.querySelector('.score-number');
+        let current = 0;
+        const increment = target / 60;
+        const timer = setInterval(() => {
+            current += increment;
+            if (current >= target) {
+                current = target;
+                clearInterval(timer);
+            }
+            numEl.textContent = Math.round(current * 10) / 10;
+        }, 16);
+    }, 300);
+});
+</script>
+{% endblock %}
