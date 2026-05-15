@@ -51,7 +51,7 @@ def login_view(request):
                 if user.check_password(password):
                     login(request, user)
                     messages.success(request, 'Welcome back!')
-                    nxt = request.GET.get('next', 'dashboard')
+                    nxt = request.GET.get('next', 'home')
                     return redirect(nxt)
                 else:
                     form.add_error('password', 'Incorrect password.')
@@ -184,17 +184,17 @@ def dashboard(request):
     user_skills = UserSkill.objects.filter(user=request.user).order_by('-added_at')
     latest_analysis = Analysis.objects.filter(user=request.user).first()
     
-    # Get list of skill names already added by the user
+    
     user_skill_names = list(user_skills.values_list('skill_name', flat=True))
 
     context = {
         'profile': profile,
         'user_skills': user_skills,
-        'user_skill_names': user_skill_names,  # Needed for template logic
+        'user_skill_names': user_skill_names,  
         'latest_analysis': latest_analysis,
         'roles': ROLES,
-        'SKILL_CATEGORIES': SKILL_CATEGORIES,  # Needed for the browser
-        'ALL_SKILLS': ALL_SKILLS,               # Needed for autocomplete JS
+        'SKILL_CATEGORIES': SKILL_CATEGORIES,  
+        'ALL_SKILLS': ALL_SKILLS,               
     }
     return render(request, 'analyzer/dashboard.html', context)
 
@@ -202,4 +202,4 @@ def dashboard(request):
 def analysis_history(request):
     analyses = Analysis.objects.filter(user=request.user)[:10]
     context = {'analyses': analyses}
-    return render(request, 'analyzer/dashboard.html', context)
+    return render(request, 'analyzer/home.html', context)
